@@ -1,0 +1,180 @@
+use anchor_lang::prelude::*;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
+
+use anchor_spl::token::Transfer;
+use anchor_spl::token::{transfer, Transfer as SplTransfer};
+
+use crate::{
+    AuthRole, AuthorityRole, BuyEvent, ListingData, ListingEvent, ListingStatus, Market,
+    MarketErrors, MarketStatus, LISTING_ACCOUNT, MARKET_ACCOUNT, OPERATOR_ROLE,
+};
+
+#[derive(Accounts)]
+pub struct Buy<'info> {
+    #[account(
+        seeds = [MARKET_ACCOUNT],
+        bump=market.bump,
+    )]
+    pub market: Box<Account<'info, Market>>,
+    #[account(
+        init_if_needed,
+        payer = buyer,
+        associated_token::mint = currency_mint,
+        associated_token::authority = market
+    )]
+    pub currency_market: Account<'info, TokenAccount>,
+
+    #[account(
+        init_if_needed,
+        payer = buyer,
+        associated_token::mint = nft_mint,
+        associated_token::authority = buyer
+    )]
+    pub nft_to: Account<'info, TokenAccount>,
+    #[account(
+        init_if_needed,
+        payer = buyer,
+        associated_token::mint = currency_mint,
+        associated_token::authority = seller
+    )]
+    pub currency_to: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        associated_token::mint = nft_mint,
+        associated_token::authority = market,
+    )]
+    pub nft_from: Account<'info, TokenAccount>,
+    #[account(
+        init_if_needed,
+        payer = buyer,
+        associated_token::mint = currency_mint,
+        associated_token::authority = buyer
+    )]
+    pub currency_from: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        seeds = [LISTING_ACCOUNT, nft_mint.key().as_ref()],
+        bump=listing_account.bump
+    )]
+    pub listing_account: Account<'info, ListingData>,
+
+    pub nft_mint: Account<'info, Mint>,
+    pub currency_mint: Account<'info, Mint>,
+    #[account(mut, signer)]
+    pub buyer: Signer<'info>,
+
+    //CHECK: read only
+    pub seller: UncheckedAccount<'info>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
+}
+
+pub fn handler(ctx: Context<Buy>) -> Result<()> {
+    // let mint = &mut ctx.accounts.mint;
+    let market = &ctx.accounts.market;
+    let buyer = &ctx.accounts.buyer;
+    let currency_mint = &ctx.accounts.currency_mint;
+    let currency_from = &ctx.accounts.currency_from;
+    let currency_to = &ctx.accounts.currency_to;
+    let currency_market = &ctx.accounts.currency_market;
+    let seller = &ctx.accounts.seller;
+    let listing_account = &mut ctx.accounts.listing_account;
+
+    validate(&listing_account, seller.key(), currency_mint.key())?;
+
+    //calculate commisison
+    let commission_amount = market.commission * listing_account.price / 100;
+    let seller_amount = listing_account.price - commission_amount;
+
+    //transfer amount to seller
+
+    msg!("Transfer currency from seller to buyer");
+    transfer(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            SplTransfer {
+                authority: buyer.to_account_info(),
+                from: currency_from.to_account_info(),
+                to: currency_to.to_account_info(),
+            },
+        ),
+        seller_amount,
+    )?;
+
+    //transfer commistion to market
+    msg!("Transfer commission from seller to market");
+    transfer(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            SplTransfer {
+                authority: buyer.to_account_info(),
+                from: currency_from.to_account_info(),
+                to: currency_market.to_account_info(),
+            },
+        ),
+        commission_amount,
+    )?;
+
+    //transfer NFT to buyer
+    msg!("Transfer NFT tobuyer");
+    transfer(
+        CpiContext::new(
+            ctx.accounts.nft_mint.to_account_info(),
+            Transfer {
+                from: ctx.accounts.nft_from.to_account_info(),
+                to: ctx.accounts.nft_to.to_account_info(),
+                authority: market.to_account_info(),
+            },
+        ),
+        1,
+    )?;
+
+    //update listing account
+    listing_account.status = ListingStatus::Close;
+
+    emit!(BuyEvent {
+        buyer: buyer.key(),
+        seller: listing_account.owner,
+        mint: ctx.accounts.nft_mint.key(),
+        currency: ctx.accounts.currency_mint.key(),
+        price: listing_account.price,
+        commission: commission_amount,
+        time: Clock::get()?.unix_timestamp
+    });
+
+    Ok(())
+}
+
+fn validate(
+    listing_account: &Account<ListingData>,
+    seller: Pubkey,
+    currency_mint: Pubkey,
+) -> Result<()> {
+    require!(
+        listing_account.status == ListingStatus::Listing,
+        MarketErrors::ItemNotFound
+    );
+
+    require_eq!(
+        listing_account.currency,
+        currency_mint,
+        MarketErrors::InputInvalid
+    );
+
+    require_eq!(listing_account.owner, seller, MarketErrors::InputInvalid);
+
+    let current = Clock::get()?.unix_timestamp;
+
+    require_gte!(
+        current,
+        listing_account.opentime,
+        MarketErrors::ItemStillLock
+    );
+    Ok(())
+}
