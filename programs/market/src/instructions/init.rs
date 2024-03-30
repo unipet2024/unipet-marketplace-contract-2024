@@ -35,7 +35,7 @@ pub struct Init<'info> {
     pub system_program: Program<'info, System>, 
 }
 
-pub fn handle(ctx: Context<Init>,duration: i64, currencies: CurrencyParams, commission: u64) -> Result<()> {
+pub fn init_handler(ctx: Context<Init>,duration: i64, currencies: CurrencyParams, commission: u64) -> Result<()> {
     let market = &mut ctx.accounts.market;
     let admin_account = &mut ctx.accounts.admin_account;
     let operator_account = &mut ctx.accounts.operator_account;

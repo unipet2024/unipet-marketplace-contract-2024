@@ -16,3 +16,7 @@ wallet = "/Users/tabatrung/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+# test_init = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/test_init.ts"
+# test_set_currency = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/test_set_currency.ts"
+# test_set_duration = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/test_set_duration.ts"
+# test_set_operator = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/test_set_operator.ts"

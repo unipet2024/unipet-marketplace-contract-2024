@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+// use solana_program::pubkey;
 
 #[event]
 pub struct ListingEvent {
@@ -18,6 +19,14 @@ pub struct BuyEvent {
     pub currency: Pubkey,
     pub price: u64,
     pub commission: u64,
+    pub time: i64,
+}
+
+#[event]
+pub struct WithdrawEvent {
+    pub admin: Pubkey,
+    pub currency: Pubkey,
+    pub amount: u64,
     pub time: i64,
 }
 

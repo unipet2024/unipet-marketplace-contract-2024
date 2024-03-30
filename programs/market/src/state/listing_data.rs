@@ -6,7 +6,7 @@ use crate::ListingStatus;
 pub struct ListingData {
     pub owner: Pubkey,         //32
     pub currency: Pubkey,      //32
-    pub price: u64,           //16
+    pub price: u64,            //16
     pub listingtime: i64,      //4
     pub opentime: i64,         //4
     pub status: ListingStatus, //1
@@ -31,6 +31,14 @@ impl ListingData {
         self.status = ListingStatus::Listing;
         self.bump = bump;
 
+        Ok(())
+    }
+
+    pub fn un_listing(&mut self) -> Result<()> {
+        self.status = ListingStatus::Close;
+        self.price = 0;
+        self.listingtime = 0;
+        self.opentime = 0;
         Ok(())
     }
 }

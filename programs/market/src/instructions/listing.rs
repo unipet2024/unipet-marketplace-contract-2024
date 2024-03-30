@@ -46,6 +46,7 @@ pub struct Listing<'info> {
         init_if_needed,
         space = 8 + 90,
         payer = authority,
+        // seeds = [LISTING_ACCOUNT],
         seeds = [LISTING_ACCOUNT, mint.key().as_ref()],
         bump
     )]
@@ -59,12 +60,14 @@ pub struct Listing<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn listing(ctx: Context<Listing>, currency: Pubkey, price: u64) -> Result<()> {
+pub fn listing_handler(ctx: Context<Listing>, currency: Pubkey, price: u64) -> Result<()> {
     let market = &mut ctx.accounts.market;
     let listing_account = &mut ctx.accounts.listing_account;
     let operator_account = &mut ctx.accounts.operator_account;
     let token_program = &ctx.accounts.token_program;
     let authority = &ctx.accounts.authority;
+
+    msg!("Currency: {:}", currency);
 
     //check market status
     require!(
@@ -76,18 +79,21 @@ pub fn listing(ctx: Context<Listing>, currency: Pubkey, price: u64) -> Result<()
     );
 
     //check currency supported
+    // market.check_currency_support(&currency);
     require!(
         market.check_currency_support(&currency) == true,
         MarketErrors::CurrencyNotSupport
     );
 
     //check nft listed
+    msg!("Listing status: {:?}", listing_account.status);
     require!(
         listing_account.status != ListingStatus::Listing,
         MarketErrors::ListingAlready
     );
 
     //transfer NFT to market
+    msg!("Transfer NFT to market");
     anchor_spl::token::transfer(
         CpiContext::new(
             token_program.to_account_info(),
@@ -125,3 +131,4 @@ pub fn listing(ctx: Context<Listing>, currency: Pubkey, price: u64) -> Result<()
 
     Ok(())
 }
+

@@ -26,14 +26,14 @@ pub struct OperatorInstruction<'info> {
     pub system_program: Program<'info, System>, 
 }
 
-pub fn set_duration(ctx: Context<OperatorInstruction>, duration: i64) -> Result<()> {
+pub fn set_duration_handler(ctx: Context<OperatorInstruction>, duration: i64) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
     market.duration = duration;
     Ok(())
 }
 
-pub fn set_currencies(ctx: Context<OperatorInstruction>, currencies: CurrencyParams) -> Result<()> {
+pub fn set_currencies_handler(ctx: Context<OperatorInstruction>, currencies: CurrencyParams) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
     market.currencies = currencies.currency;

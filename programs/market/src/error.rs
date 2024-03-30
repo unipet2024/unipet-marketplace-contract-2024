@@ -36,6 +36,12 @@ pub enum MarketErrors {
 
     #[msg("Input invalid")]
     InputInvalid,
+
+    #[msg("Insufficient amount")]
+    InsufficientAmount,
+
+    #[msg("Only owner")]
+    OnlyOwner,
 }
 
 impl From<MarketErrors> for ProgramError {

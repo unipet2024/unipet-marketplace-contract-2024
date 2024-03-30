@@ -1,0 +1,597 @@
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { Market } from "../target/types/market";
+import { Wallet } from "@coral-xyz/anchor";
+
+import {
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+  sendAndConfirmRawTransaction,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
+
+import {
+  createMint,
+  createAssociatedTokenAccount,
+  getAssociatedTokenAddress,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
+  transfer,
+  createAccount,
+} from "@solana/spl-token";
+
+import { assert, expect } from "chai";
+
+describe("market", async () => {
+  let provider = anchor.AnchorProvider.env();
+
+  let owner = provider.wallet as Wallet;
+  // Configure the client to use the local cluster.
+  anchor.setProvider(provider);
+
+  const program = anchor.workspace.Market as Program<Market>;
+
+  let currency1, currency2, currency3;
+  let seller1, seller2, seller3;
+  let new_operator;
+  let buyer1, buyer2, buyer3;
+  let market_account, admin_account, operator_account;
+
+  beforeEach(async () => {
+    // console.log("Initialising...");
+    seller1 = new anchor.web3.Keypair();
+    seller2 = new anchor.web3.Keypair();
+    seller3 = new anchor.web3.Keypair();
+    buyer1 = new anchor.web3.Keypair();
+    buyer2 = new anchor.web3.Keypair();
+    buyer3 = new anchor.web3.Keypair();
+    new_operator = new anchor.web3.Keypair();
+    console.log("owner", owner.publicKey.toString());
+
+    [market_account] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("MARKET_ACCOUNT")],
+      program.programId
+    );
+
+    [admin_account] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("ADMIN_ROLE")],
+      program.programId
+    );
+
+    [operator_account] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("OPERATOR_ROLE")],
+      program.programId
+    );
+
+    // market_mint2 = await getOrCreateAssociatedTokenAccount(
+    //   program.provider.connection,
+    //   owner.payer,
+    //   mint2,
+    //   market_account,
+    //   true
+    // );
+
+    // market_mint3 = await getOrCreateAssociatedTokenAccount(
+    //   program.provider.connection,
+    //   owner.payer,
+    //   mint3,
+    //   market_account,
+    //   true
+    // );
+
+    // seller1_mint1 = await getAssociatedTokenAddress(mint1, seller1.publicKey);
+
+    // seller2_mint2 = await getAssociatedTokenAddress(mint2, seller2.publicKey);
+
+    // seller3_mint3 = await getAssociatedTokenAddress(mint3, seller3.publicKey);
+
+    // buyer1_mint1 = await getAssociatedTokenAddress(mint1, buyer1.publicKey);
+
+    // buyer2_mint2 = await getAssociatedTokenAddress(mint2, buyer2.publicKey);
+
+    // buyer3_mint3 = await getAssociatedTokenAddress(mint3, buyer3.publicKey);
+
+    // await mintTo(
+    //   program.provider.connection,
+    //   owner.payer,
+    //   mint1,
+    //   seller1_mint1,
+    //   owner.payer,
+    //   1
+    // );
+
+    // await mintTo(
+    //   program.provider.connection,
+    //   owner.payer,
+    //   mint2,
+    //   seller2_mint2,
+    //   owner.payer,
+    //   1
+    // );
+
+    // await mintTo(
+    //   program.provider.connection,
+    //   owner.payer,
+    //   mint3,
+    //   seller3_mint3,
+    //   owner.payer,
+    //   1
+    // );
+
+    currency1 = await createMint(
+      program.provider.connection,
+      owner.payer,
+      owner.publicKey,
+      null,
+      0
+    );
+
+    currency2 = await createMint(
+      program.provider.connection,
+      owner.payer,
+      owner.publicKey,
+      null,
+      0
+    );
+
+    // currency3 = await createMint(
+    //   program.provider.connection,
+    //   owner.payer,
+    //   owner.publicKey,
+    //   null,
+    //   0
+    // );
+
+    // listing_mint2 = anchor.web3.PublicKey.findProgramAddressSync(
+    //   [Buffer.from("LISTING_ACCOUNT"), mint2.toBuffer()],
+    //   program.programId
+    // );
+
+    // listing_mint3 = anchor.web3.PublicKey.findProgramAddressSync(
+    //   [Buffer.from("LISTING_ACCOUNT"), mint3.toBuffer()],
+    //   program.programId
+    // );
+
+    await program.methods
+      .init(
+        new anchor.BN(5),
+        { currency: [currency1, currency2] },
+        new anchor.BN(20)
+      )
+      .accounts({
+        market: market_account,
+        adminAccount: admin_account,
+        operatorAccount: operator_account,
+      })
+      .rpc();
+
+    console.log("Admin account: ", admin_account.toString());
+    console.log("Market account:", market_account.toString());
+  });
+
+  // it("Init!", async () => {
+  //   // Add your test here.
+  //   await program.methods
+  //     .init(
+  //       new anchor.BN(5),
+  //       { currency: [currency1, currency2] },
+  //       new anchor.BN(20)
+  //     )
+  //     .accounts({
+  //       market: market_account,
+  //       adminAccount: admin_account,
+  //       operatorAccount: operator_account,
+  //     })
+  //     .rpc();
+
+  //   let market_account_info = await program.account.market.fetch(
+  //     market_account
+  //   );
+  //   assert.equal(
+  //     market_account_info.admin.toString(),
+  //     admin_account.toString(),
+  //     "Admin account invalid"
+  //   );
+
+  //   assert.equal(market_account_info.commission.toNumber(), 20);
+  //   assert.equal(market_account_info.duration.toNumber(), 5);
+  //   assert.deepEqual(market_account_info.currencies, [currency1, currency2]);
+  //   // assert.equal(market_account_info.status,"Private")
+  //   // console.log(market_account_info);
+
+  //   assert.equal(
+  //     market_account_info.operator.toString(),
+  //     operator_account.toString(),
+  //     "Operator account invalid"
+  //   );
+
+  //   let admin_account_info = await program.account.authorityRole.fetch(
+  //     admin_account
+  //   );
+  //   assert.equal(
+  //     admin_account_info.authority.toString(),
+  //     owner.publicKey.toString(),
+  //     "Admin invalid"
+  //   );
+  //   // console.log(admin_account_info.role);
+  //   // assert.equal(admin_account_info.role..toString(), "Admin", "Admin invalid");
+
+  //   let operator_account_info = await program.account.authorityRole.fetch(
+  //     operator_account
+  //   );
+  //   assert.equal(
+  //     operator_account_info.authority.toString(),
+  //     owner.publicKey.toString(),
+  //     "Operator invalid"
+  //   );
+  //   // console.log(operator_account_info.role);
+  //   // assert.equal(admin_account_info.role.toString(), "Operator", "Operator invalid");
+  // });
+
+  // it("Set currency!", async () => {
+  //   await program.methods
+  //     .setCurrencies({ currency: [currency1, currency2] })
+  //     .accounts({
+  //       market: market_account,
+  //       adminAccount: admin_account,
+  //     })
+  //     .rpc();
+
+  //   let market_account_info = await program.account.market.fetch(
+  //     market_account
+  //   );
+
+  //   assert.deepEqual(market_account_info.currencies, [currency1, currency2]);
+
+  //   await program.methods
+  //     .setCurrencies({ currency: [currency1, currency3, currency2] })
+  //     .accounts({
+  //       market: market_account,
+  //       adminAccount: admin_account,
+  //     })
+  //     .rpc();
+
+  //   market_account_info = await program.account.market.fetch(market_account);
+
+  //   assert.deepEqual(market_account_info.currencies, [
+  //     currency1,
+  //     currency3,
+  //     currency2,
+  //   ]);
+  // });
+
+  // it("Set duration!", async () => {
+  //   const new_duration = new anchor.BN(20);
+  //   await program.methods
+  //     .setDuration(new_duration)
+  //     .accounts({
+  //       market: market_account,
+  //       adminAccount: admin_account,
+  //     })
+  //     .rpc();
+
+  //   let market_account_info = await program.account.market.fetch(
+  //     market_account
+  //   );
+
+  //   assert.equal(
+  //     market_account_info.duration.toNumber(),
+  //     new_duration.toNumber()
+  //   );
+  // });
+
+  // it("Set operator!", async () => {
+  //   let new_operator = new anchor.web3.Keypair();
+  //   console.log("new operator: ", new_operator.publicKey.toString());
+
+  //   await program.methods
+  //     .setOperator(new_operator.publicKey)
+  //     .accounts({
+  //       market: market_account,
+  //       adminAccount: admin_account,
+  //       operatorAccount: operator_account,
+  //     })
+  //     .rpc();
+
+  //   let operator_account_info = await program.account.authorityRole.fetch(
+  //     operator_account
+  //   );
+  //   assert.equal(
+  //     operator_account_info.authority.toString(),
+  //     new_operator.publicKey.toString(),
+  //     "Operator invalid"
+  //   );
+  // });
+
+  it("Listing!", async () => {
+    console.log("Seller 1 listing NFT 1");
+
+    let mint1 = await createMint(
+      program.provider.connection,
+      owner.payer,
+      owner.publicKey,
+      null,
+      0
+    );
+
+    console.log("Mint 1: ", mint1.toString());
+
+    let mint2 = await createMint(
+      program.provider.connection,
+      owner.payer,
+      owner.publicKey,
+      null,
+      0
+    );
+
+    console.log("Mint 2: ", mint2.toString());
+
+    let mint3 = await createMint(
+      program.provider.connection,
+      owner.payer,
+      owner.publicKey,
+      null,
+      0
+    );
+
+    console.log("Mint 3: ", mint3.toString());
+
+    let market_mint1 = await getOrCreateAssociatedTokenAccount(
+      program.provider.connection,
+      owner.payer,
+      mint1,
+      market_account,
+      true
+    );
+
+    console.log("Market mint 1 : ", market_mint1.address.toString());
+
+    // let seller1_mint1 = await getAssociatedTokenAddress(
+    //   mint1,
+    //   seller1.publicKey
+    // );
+
+    let seller1_mint1 = await createAssociatedTokenAccount(
+      program.provider.connection,
+      owner.payer,
+      mint1,
+      seller1.publicKey
+    );
+
+    console.log("Selelt 1 mint 1: ", seller1_mint1.toString());
+
+    let operator_mint1 = await createAssociatedTokenAccount(
+      program.provider.connection,
+      owner.payer,
+      mint1,
+      new_operator.publicKey
+    );
+
+    console.log("Operator mint 1: ", operator_mint1.toString());
+
+    let owner_mint1 = await createAssociatedTokenAccount(
+      program.provider.connection,
+      owner.payer,
+      mint1,
+      owner.publicKey
+    );
+
+    let seller2_mint2 = await createAssociatedTokenAccount(
+      program.provider.connection,
+      owner.payer,
+      mint2,
+      seller2.publicKey
+    );
+
+    console.log("Sellet 1 Mint 1: ", seller1_mint1.toString());
+
+    await mintTo(
+      program.provider.connection,
+      owner.payer,
+      mint1,
+      seller1_mint1,
+      owner.payer,
+      1
+    );
+
+    await mintTo(
+      program.provider.connection,
+      owner.payer,
+      mint1,
+      operator_mint1,
+      owner.payer,
+      1
+    );
+
+    console.log("After mint ");
+
+    let seller1_mint1_balance =
+      await program.provider.connection.getTokenAccountBalance(seller1_mint1);
+    console.log("seller1_mint1_balance: ", seller1_mint1_balance.value.amount);
+
+    console.log("Set new operator");
+    await program.methods
+      .setOperator(new_operator.publicKey)
+      .accounts({
+        market: market_account,
+        adminAccount: admin_account,
+        operatorAccount: operator_account,
+      })
+      .rpc();
+
+    let operator_account_info = await program.account.authorityRole.fetch(
+      operator_account
+    );
+    assert.equal(
+      operator_account_info.authority.toString(),
+      new_operator.publicKey.toString(),
+      "Operator invalid"
+    );
+
+    console.log("Set market to private, only operator can listing");
+    await program.methods
+      .setStatus({ private: {} })
+      .accounts({
+        market: market_account,
+        operatorAccount: operator_account,
+        adminAccount: admin_account,
+      })
+      .rpc();
+
+    // let market_account_info = await program.account.market.fetch(
+    //   market_account
+    // );
+    // console.log(market_account_info);
+
+    let [listing_mint1] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("LISTING_ACCOUNT"), mint1.toBuffer()],
+      program.programId
+    );
+
+    console.log("Listing mint 1: ", listing_mint1.toString());
+    let transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: owner.publicKey,
+        toPubkey: seller1.publicKey,
+        lamports: LAMPORTS_PER_SOL,
+      })
+    );
+
+    // Sign transaction, broadcast, and confirm
+    let signature = await sendAndConfirmTransaction(
+      program.provider.connection,
+      transaction,
+      [owner.payer]
+    );
+
+    transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: owner.publicKey,
+        toPubkey: new_operator.publicKey,
+        lamports: LAMPORTS_PER_SOL,
+      })
+    );
+
+    // Sign transaction, broadcast, and confirm
+    signature = await sendAndConfirmTransaction(
+      program.provider.connection,
+      transaction,
+      [owner.payer]
+    );
+    console.log("SIGNATURE", signature);
+    // console.log("SIGNATURE", signature);
+
+    // const transaction = await SystemProgram.transfer({
+    //   fromPubkey: owner.publicKey,
+    //   toPubkey: seller1.publicKey,
+    //   lamports: 10 * LAMPORTS_PER_SOL,
+    // });
+
+    // const signature = await sendAndConfirmTransaction(
+    //   program.provider.connection,
+    //   transaction,
+    //   [owner],
+    // );
+
+    let seller1_balance = await program.provider.connection.getBalance(
+      seller1.publicKey
+    );
+    console.log("Seller 1 balance: ", seller1_balance);
+
+    // let listing_mint1_info = await program.account.listingData.fetch(
+    //   listing_mint1
+    // );
+    // console.log(listing_mint1_info)
+    try {
+      await program.methods
+        .listing(currency1, new anchor.BN(15))
+        .accounts({
+          market: market_account,
+          operatorAccount: operator_account,
+          from: operator_mint1,
+          to: market_mint1.address,
+          mint: mint1,
+          authority: new_operator.publicKey,
+          listingAccount: listing_mint1,
+        })
+        .signers([new_operator])
+        .rpc();
+    } catch (error) {
+      console.log(error);
+    }
+
+    let listing_mint1_info = await program.account.listingData.fetch(
+      listing_mint1
+    );
+
+    console.log(listing_mint1_info.listingtime.toNumber());
+    console.log(listing_mint1_info.opentime.toNumber());
+
+    assert.equal(listing_mint1_info.currency, currency1.toString());
+    assert.equal(
+      listing_mint1_info.owner.toString(),
+      new_operator.publicKey.toString()
+    );
+    assert.equal(listing_mint1_info.price.toNumber(), 15);
+
+    console.log("Operator update price");
+    try {
+      await program.methods
+        .updatePrice(currency2, new anchor.BN(7))
+        .accounts({
+          market: market_account,
+          listingAccount: listing_mint1,
+          authority: new_operator.publicKey,
+          mint: mint1,
+        })
+        .signers([new_operator])
+        .rpc();
+    } catch (error) {
+      console.log(error);
+    }
+
+    listing_mint1_info = await program.account.listingData.fetch(listing_mint1);
+
+    console.log(listing_mint1_info.listingtime.toNumber());
+    console.log(listing_mint1_info.opentime.toNumber());
+
+    assert.equal(listing_mint1_info.currency, currency2.toString());
+    assert.equal(
+      listing_mint1_info.owner.toString(),
+      new_operator.publicKey.toString()
+    );
+    assert.equal(listing_mint1_info.price.toNumber(), 7);
+
+    console.log("Operator unlisting nft 1");
+    try {
+      await program.methods
+        .unListing()
+        .accounts({
+          market: market_account,
+          listingAccount: listing_mint1,
+          authority: new_operator.publicKey,
+          from: market_mint1.address,
+          to: operator_mint1,
+          mint: mint1,
+        })
+        .signers([new_operator])
+        .rpc();
+    } catch (error) {
+      console.log(error);
+    }
+    listing_mint1_info = await program.account.listingData.fetch(listing_mint1);
+
+    console.log(listing_mint1_info.listingtime.toNumber());
+    console.log(listing_mint1_info.opentime.toNumber());
+
+    assert.equal(listing_mint1_info.currency, currency2.toString());
+    assert.equal(
+      listing_mint1_info.owner.toString(),
+      new_operator.publicKey.toString()
+    );
+    assert.equal(listing_mint1_info.price.toNumber(), 0);
+
+    
+  });
+});

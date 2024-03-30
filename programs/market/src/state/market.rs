@@ -54,8 +54,10 @@ impl Market {
 
     pub fn check_currency_support(&self, token: &Pubkey) -> bool {
         if self.currencies.contains(token) {
+            msg!("Found currency");
             return true;
         } else {
+            msg!("Not found currency");
             return false;
         }
     }

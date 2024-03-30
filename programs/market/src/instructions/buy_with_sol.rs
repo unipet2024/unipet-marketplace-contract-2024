@@ -4,28 +4,22 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
+use anchor_spl::token::transfer;
 use anchor_spl::token::Transfer;
-use anchor_spl::token::{transfer, Transfer as SplTransfer};
+use solana_program::system_instruction;
 
 use crate::{
-    AuthRole, AuthorityRole, BuyEvent, ListingData, ListingEvent, ListingStatus, Market,
-    MarketErrors, MarketStatus, LISTING_ACCOUNT, MARKET_ACCOUNT, OPERATOR_ROLE,
+    BuyEvent, ListingData, ListingStatus, Market, MarketErrors, LISTING_ACCOUNT, MARKET_ACCOUNT,
 };
 
 #[derive(Accounts)]
-pub struct Buy<'info> {
+pub struct BuyWithSOL<'info> {
     #[account(
+        mut,
         seeds = [MARKET_ACCOUNT],
         bump=market.bump,
     )]
     pub market: Box<Account<'info, Market>>,
-    #[account(
-        init_if_needed,
-        payer = buyer,
-        associated_token::mint = currency_mint,
-        associated_token::authority = market
-    )]
-    pub currency_market: Account<'info, TokenAccount>,
 
     #[account(
         init_if_needed,
@@ -34,13 +28,6 @@ pub struct Buy<'info> {
         associated_token::authority = buyer
     )]
     pub nft_to: Account<'info, TokenAccount>,
-    #[account(
-        init_if_needed,
-        payer = buyer,
-        associated_token::mint = currency_mint,
-        associated_token::authority = seller
-    )]
-    pub currency_to: Account<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -48,45 +35,40 @@ pub struct Buy<'info> {
         associated_token::authority = market,
     )]
     pub nft_from: Account<'info, TokenAccount>,
-    #[account(
-        init_if_needed,
-        payer = buyer,
-        associated_token::mint = currency_mint,
-        associated_token::authority = buyer
-    )]
-    pub currency_from: Account<'info, TokenAccount>,
 
     #[account(
         mut,
         seeds = [LISTING_ACCOUNT, nft_mint.key().as_ref()],
-        bump=listing_account.bump
+        bump=listing_account.bump,
+        // constraint = listing_account.owner == seller.key() @ MarketErrors::InputInvalid,
+        // constraint = listing_account.status == ListingStatus::Listing @ MarketErrors::ItemNotFound,
     )]
     pub listing_account: Account<'info, ListingData>,
 
     pub nft_mint: Account<'info, Mint>,
-    pub currency_mint: Account<'info, Mint>,
     #[account(mut, signer)]
     pub buyer: Signer<'info>,
 
-    //CHECK: read only
-    pub seller: UncheckedAccount<'info>,
+    /// CHECK: for sending sol
+    #[account(mut)]
+    pub seller: AccountInfo<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Buy>) -> Result<()> {
+pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
     // let mint = &mut ctx.accounts.mint;
     let market = &ctx.accounts.market;
-    let buyer = &ctx.accounts.buyer;
-    let currency_mint = &ctx.accounts.currency_mint;
-    let currency_from = &ctx.accounts.currency_from;
-    let currency_to = &ctx.accounts.currency_to;
-    let currency_market = &ctx.accounts.currency_market;
     let seller = &ctx.accounts.seller;
+    let buyer = &ctx.accounts.buyer;
     let listing_account = &mut ctx.accounts.listing_account;
 
-    validate(&listing_account, seller.key(), currency_mint.key())?;
+    validate(
+        &listing_account,
+        &seller.key(),
+        buyer.to_account_info().lamports(),
+    )?;
 
     //calculate commisison
     let commission_amount = market.commission * listing_account.price / 100;
@@ -94,35 +76,41 @@ pub fn handler(ctx: Context<Buy>) -> Result<()> {
 
     //transfer amount to seller
 
-    msg!("Transfer currency from seller to buyer");
-    transfer(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            SplTransfer {
-                authority: buyer.to_account_info(),
-                from: currency_from.to_account_info(),
-                to: currency_to.to_account_info(),
-            },
-        ),
-        seller_amount,
+    msg!("Transfer SOL from seller to buyer");
+    let mut transfer_instruction =
+        system_instruction::transfer(buyer.key, seller.key, seller_amount);
+
+    // Invoke the transfer instruction
+    anchor_lang::solana_program::program::invoke_signed(
+        &transfer_instruction,
+        &[
+            buyer.to_account_info(),
+            seller.clone(),
+            ctx.accounts.system_program.to_account_info(),
+        ],
+        &[],
     )?;
 
     //transfer commistion to market
-    msg!("Transfer commission from seller to market");
-    transfer(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            SplTransfer {
-                authority: buyer.to_account_info(),
-                from: currency_from.to_account_info(),
-                to: currency_market.to_account_info(),
-            },
-        ),
-        commission_amount,
+    msg!("Transfer commission from buyer to market");
+    transfer_instruction =
+        system_instruction::transfer(buyer.key, &market.key(), commission_amount);
+
+    // Invoke the transfer instruction
+    anchor_lang::solana_program::program::invoke_signed(
+        &transfer_instruction,
+        &[
+            buyer.to_account_info(),
+            market.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+        ],
+        &[],
     )?;
 
     //transfer NFT to buyer
     msg!("Transfer NFT tobuyer");
+    let seeds: &[&[u8]] = &[MARKET_ACCOUNT, &[market.bump]];
+    let signer = &[&seeds[..]];
     transfer(
         CpiContext::new(
             ctx.accounts.nft_mint.to_account_info(),
@@ -131,7 +119,8 @@ pub fn handler(ctx: Context<Buy>) -> Result<()> {
                 to: ctx.accounts.nft_to.to_account_info(),
                 authority: market.to_account_info(),
             },
-        ),
+        )
+        .with_signer(signer),
         1,
     )?;
 
@@ -142,7 +131,7 @@ pub fn handler(ctx: Context<Buy>) -> Result<()> {
         buyer: buyer.key(),
         seller: listing_account.owner,
         mint: ctx.accounts.nft_mint.key(),
-        currency: ctx.accounts.currency_mint.key(),
+        currency: ctx.accounts.market.key(),
         price: listing_account.price,
         commission: commission_amount,
         time: Clock::get()?.unix_timestamp
@@ -151,25 +140,30 @@ pub fn handler(ctx: Context<Buy>) -> Result<()> {
     Ok(())
 }
 
-fn validate(
-    listing_account: &Account<ListingData>,
-    seller: Pubkey,
-    currency_mint: Pubkey,
-) -> Result<()> {
+fn validate(listing_account: &Account<ListingData>, seller: &Pubkey, amount: u64) -> Result<()> {
     require!(
         listing_account.status == ListingStatus::Listing,
         MarketErrors::ItemNotFound
     );
 
+    // SET currency = market.address in case SOL
     require_eq!(
         listing_account.currency,
-        currency_mint,
+        Pubkey::try_from("11111111111111111111111111111111").unwrap(),
         MarketErrors::InputInvalid
     );
 
-    require_eq!(listing_account.owner, seller, MarketErrors::InputInvalid);
+    require_gte!(
+        amount,
+        listing_account.price,
+        MarketErrors::InsufficientAmount
+    );
+
+    require_eq!(listing_account.owner, *seller, MarketErrors::InputInvalid);
 
     let current = Clock::get()?.unix_timestamp;
+    msg!("Current:{:}", current);
+    msg!("Open time:{:}", listing_account.opentime);
 
     require_gte!(
         current,

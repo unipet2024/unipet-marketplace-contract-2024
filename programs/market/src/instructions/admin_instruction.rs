@@ -50,16 +50,9 @@ pub fn update_operator(ctx: Context<AdminInstruction>, operator: Pubkey) -> Resu
     Ok(())
 }
 
-pub fn set_status(ctx: Context<AdminInstruction>, status: MarketStatus) -> Result<()> {
+pub fn set_status_handler(ctx: Context<AdminInstruction>, status: MarketStatus) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
     market.set_status(status);
     Ok(())
 }
-
-// pub fn set_public(ctx: Context<AdminInstruction>, public: bool) -> Result<()> {
-//     let market = &mut ctx.accounts.market;
-
-//     market.set_public(public);
-//     Ok(())
-// }
