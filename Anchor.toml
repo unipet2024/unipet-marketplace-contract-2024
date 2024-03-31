@@ -4,14 +4,14 @@
 seeds = false
 skip-lint = false
 
-[programs.localnet]
+[programs.devnet]
 market = "7ScnRwX7fYPQbc126PPtMYdgHSE9zhbXLAcYY6rqgAEx"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "/Users/tabatrung/.config/solana/id.json"
 
 [scripts]
