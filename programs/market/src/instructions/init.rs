@@ -15,7 +15,7 @@ pub struct Init<'info> {
     pub market: Box<Account<'info, Market>>,
     #[account(
         init_if_needed,
-        space = 60,
+        space = 8 + 40, // 1 admin
         payer = authority,
         seeds = [ADMIN_ROLE], 
         bump,
@@ -23,7 +23,7 @@ pub struct Init<'info> {
     pub admin_account:  Account<'info, AuthorityRole>,
     #[account(
         init_if_needed,
-        space = 60,
+        space = 8+170, // max 5 operator
         payer = authority,
         seeds = [OPERATOR_ROLE], 
         bump,
@@ -50,19 +50,20 @@ pub fn init_handler(ctx: Context<Init>,duration: i64, currencies: CurrencyParams
         commission
     )?;
 
-    //SET ADMIN
-    admin_account.initialize(
-        ctx.accounts.authority.key(),
-        ctx.bumps.admin_account,
-        AuthRole::Admin,
-    )?;
+     //SET ADMIN
+   //SET ADMIN
+   let authorities = vec![ctx.accounts.authority.key()];
+   admin_account.initialize(
+       &authorities,
+       ctx.bumps.admin_account,
+       AuthRole::Admin,
+   )?;
+   operator_account.initialize(
+       &authorities,
+       ctx.bumps.operator_account,
+       AuthRole::Operator,
+   )?;
 
-    //SET OPERATOR ROLE FOR ADMIN
-    operator_account.initialize(
-        ctx.accounts.authority.key(),
-        ctx.bumps.operator_account,
-        AuthRole::Operator,
-    )?;
 
     Ok(())
 }

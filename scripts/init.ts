@@ -2,7 +2,6 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { IDL } from "../target/types/market";
 import { Wallet } from "@coral-xyz/anchor";
-import * as privatekey from '/Users/tabatrung/.config/solana/id.json'
 // import { setTimeout } from "timers/promises";
 
 import { PublicKey, Keypair, Connection, clusterApiUrl } from "@solana/web3.js";
@@ -28,7 +27,7 @@ const provider = new AnchorProvider(
 
 const idl = IDL;
 // Address of the deployed program.
-const programId = "7ScnRwX7fYPQbc126PPtMYdgHSE9zhbXLAcYY6rqgAEx";
+const programId = "4QWKKh3ogEeT1wpQrtTZrQ5v1wbT4Wixt2xXBmh2mW3Q";
 // Generate the program client from IDL.
 const program = new anchor.Program(idl, programId, provider);
 
@@ -44,6 +43,8 @@ async function init() {
   const usdc_token = new PublicKey(
     "BUJST4dk6fnM5G3FnhTVc3pjxRJE7w2C5YL9XgLbdsXW"
   );
+
+  const address_0 = new PublicKey("11111111111111111111111111111111");
 
   let [market_account] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("MARKET_ACCOUNT")],
@@ -70,7 +71,7 @@ async function init() {
     await program.methods
       .init(
         new anchor.BN(300),
-        { currency: [unp_token, usdc_token] },
+        { currency: [unp_token, usdc_token, address_0] },
         new anchor.BN(20)
       )
       .accounts({

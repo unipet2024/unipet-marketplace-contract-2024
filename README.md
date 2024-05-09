@@ -10,4 +10,4 @@ USDC PROGRAM: [EKri8W96pacGnsWT24dgbvBgoNkEkt873GVttcFFvHLw](https://explorer.so
 
 USDC TOKEN: [BUJST4dk6fnM5G3FnhTVc3pjxRJE7w2C5YL9XgLbdsXW](https://explorer.solana.com/address/BUJST4dk6fnM5G3FnhTVc3pjxRJE7w2C5YL9XgLbdsXW?cluster=devnet)
 
-MARKET: [7ScnRwX7fYPQbc126PPtMYdgHSE9zhbXLAcYY6rqgAEx](https://explorer.solana.com/address/7ScnRwX7fYPQbc126PPtMYdgHSE9zhbXLAcYY6rqgAEx?cluster=devnet)
+MARKET: [4QWKKh3ogEeT1wpQrtTZrQ5v1wbT4Wixt2xXBmh2mW3Q](https://explorer.solana.com/address/4QWKKh3ogEeT1wpQrtTZrQ5v1wbT4Wixt2xXBmh2mW3Q?cluster=devnet)

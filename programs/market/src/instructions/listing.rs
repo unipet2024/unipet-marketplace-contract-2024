@@ -73,7 +73,7 @@ pub fn listing_handler(ctx: Context<Listing>, currency: Pubkey, price: u64) -> R
     require!(
         (market.status == MarketStatus::Public) || 
         (market.status == MarketStatus::Private &&  //if private only operator have right to listing
-            (authority.key() == operator_account.authority.key() )
+            (operator_account.is_authority(authority.key) == true )
         ),
         MarketErrors::MatketNotOpen
     );

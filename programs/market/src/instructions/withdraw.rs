@@ -20,7 +20,7 @@ pub struct Withdraw<'info> {
     #[account(
         seeds = [ADMIN_ROLE], 
         bump=admin_account.bump,
-        constraint = admin_account.authority == admin.key() @ MarketErrors::OnlyAdmin,
+        constraint = admin_account.is_authority(admin.key) == true @ MarketErrors::OnlyAdmin,
         constraint = admin_account.role == AuthRole::Admin @ MarketErrors::OnlyAdmin,
         constraint = admin_account.status == true @ MarketErrors::OnlyAdmin,
     )]

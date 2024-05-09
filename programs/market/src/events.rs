@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+
+use crate::AuthRole;
 // use solana_program::pubkey;
 
 #[event]
@@ -19,6 +21,14 @@ pub struct BuyEvent {
     pub currency: Pubkey,
     pub price: u64,
     pub commission: u64,
+    pub time: i64,
+}
+
+#[event]
+pub struct SetAuthorityEvent {
+    pub admin: Pubkey,
+    pub role: AuthRole,
+    pub operators: Vec<Pubkey>,
     pub time: i64,
 }
 

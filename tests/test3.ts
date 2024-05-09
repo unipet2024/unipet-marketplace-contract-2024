@@ -233,8 +233,6 @@ describe("market", async () => {
       console.log(error);
     }
 
-    
-
     seller1_balance = await conn.getBalance(seller1.publicKey);
     console.log("Seller 1 balance: ", seller1_balance);
     console.log(LAMPORTS_PER_SOL - nft1_price);
@@ -243,8 +241,6 @@ describe("market", async () => {
     market_balance = await conn.getBalance(market_account);
     console.log("Market balance: ", market_balance);
     // assert.equal(market_balance, nft1_price);
-
-
   });
 });
 

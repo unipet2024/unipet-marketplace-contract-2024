@@ -3,6 +3,7 @@ pub mod error;
 pub mod events;
 pub mod instructions;
 pub mod state;
+pub mod types;
 
 use anchor_lang::prelude::*;
 
@@ -11,8 +12,9 @@ pub use error::*;
 pub use events::*;
 pub use instructions::*;
 pub use state::*;
+pub use types::*;
 
-declare_id!("7ScnRwX7fYPQbc126PPtMYdgHSE9zhbXLAcYY6rqgAEx");
+declare_id!("4QWKKh3ogEeT1wpQrtTZrQ5v1wbT4Wixt2xXBmh2mW3Q");
 
 #[program]
 pub mod market {
@@ -38,8 +40,12 @@ pub mod market {
         operator_instruction::set_currencies_handler(ctx, currencies)
     }
 
-    pub fn set_operator(ctx: Context<AdminInstruction>, operator: Pubkey) -> Result<()> {
-        admin_instruction::update_operator(ctx, operator)
+    pub fn set_authority(
+        ctx: Context<AdminInstruction>,
+        role: AuthRole,
+        operators: Vec<Pubkey>,
+    ) -> Result<()> {
+        admin_instruction::set_authority_handler(ctx, role, operators)
     }
 
     pub fn set_status(ctx: Context<AdminInstruction>, status: MarketStatus) -> Result<()> {
