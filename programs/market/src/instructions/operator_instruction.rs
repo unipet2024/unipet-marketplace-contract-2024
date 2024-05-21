@@ -19,7 +19,7 @@ pub struct OperatorInstruction<'info> {
         constraint = operator_account.role == AuthRole::Operator @ MarketErrors::OnlyOperator,
         constraint = operator_account.status == true @ MarketErrors::OnlyOperator,
     )]
-    pub operator_account:  Account<'info, AuthorityRole>,
+    pub operator_account:  Box<Account<'info, AuthorityRole>>,
 
     #[account(mut, signer)]
     pub operator: Signer<'info>,

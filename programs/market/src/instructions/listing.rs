@@ -25,14 +25,14 @@ pub struct Listing<'info> {
         constraint = operator_account.role == AuthRole::Operator @ MarketErrors::OnlyOperator,
         constraint = operator_account.status == true @ MarketErrors::OnlyOperator,
     )]
-    pub operator_account:  Account<'info, AuthorityRole>,
+    pub operator_account:  Box<Account<'info, AuthorityRole>>,
 
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = authority
     )]
-    pub from: Account<'info, TokenAccount>,
+    pub from: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init_if_needed,
@@ -40,7 +40,7 @@ pub struct Listing<'info> {
         associated_token::mint = mint,
         associated_token::authority = market,
     )]
-    pub to: Account<'info, TokenAccount>,
+    pub to: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init_if_needed,
@@ -50,9 +50,9 @@ pub struct Listing<'info> {
         seeds = [LISTING_ACCOUNT, mint.key().as_ref()],
         bump
     )]
-    pub listing_account: Account<'info, ListingData>,
+    pub listing_account: Box<Account<'info, ListingData>>,
 
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub authority: Signer<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,

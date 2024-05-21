@@ -24,7 +24,7 @@ pub struct Withdraw<'info> {
         constraint = admin_account.role == AuthRole::Admin @ MarketErrors::OnlyAdmin,
         constraint = admin_account.status == true @ MarketErrors::OnlyAdmin,
     )]
-    pub admin_account:  Account<'info, AuthorityRole>,
+    pub admin_account:  Box<Account<'info, AuthorityRole>>,
 
     #[account(
         init_if_needed,
@@ -32,16 +32,16 @@ pub struct Withdraw<'info> {
         associated_token::mint = mint,
         associated_token::authority = admin
     )]
-    pub currency_admin_account: Account<'info, TokenAccount>,
+    pub currency_admin_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = market
     )]
-    pub currency_market_account: Account<'info, TokenAccount>,
+    pub currency_market_account: Box<Account<'info, TokenAccount>>,
 
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
 
     #[account(mut, signer)]
     pub admin: Signer<'info>,

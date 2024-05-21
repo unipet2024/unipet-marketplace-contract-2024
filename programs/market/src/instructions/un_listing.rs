@@ -21,14 +21,14 @@ pub struct UnListing<'info> {
         associated_token::mint = mint,
         associated_token::authority = market
     )]
-    pub from: Account<'info, TokenAccount>,
+    pub from: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = authority,
     )]
-    pub to: Account<'info, TokenAccount>,
+    pub to: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -37,9 +37,9 @@ pub struct UnListing<'info> {
         constraint = listing_account.owner == authority.key() @ MarketErrors::OnlyOwner,
         constraint = listing_account.status == ListingStatus::Listing @ MarketErrors::ItemNotFound,
     )]
-    pub listing_account: Account<'info, ListingData>,
+    pub listing_account: Box<Account<'info, ListingData>>,
 
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub authority: Signer<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,

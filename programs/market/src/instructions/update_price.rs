@@ -21,9 +21,9 @@ pub struct UpdatePrice<'info> {
         bump=listing_account.bump,
         constraint = listing_account.owner == authority.key() @ MarketErrors::OnlyOwner,
     )]
-    pub listing_account: Account<'info, ListingData>,
+    pub listing_account: Box<Account<'info, ListingData>>,
 
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub authority: Signer<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,

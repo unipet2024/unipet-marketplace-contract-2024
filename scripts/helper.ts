@@ -5,8 +5,8 @@ import { Wallet } from "@coral-xyz/anchor";
 // import { setTimeout } from "timers/promises";
 
 import { PublicKey, Keypair, Connection, clusterApiUrl } from "@solana/web3.js";
-const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-const wallet = Keypair.fromSecretKey(
+export const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+export const wallet = Keypair.fromSecretKey(
   Uint8Array.from([
     60, 31, 216, 134, 68, 78, 5, 54, 175, 135, 221, 227, 168, 70, 131, 114, 133,
     65, 139, 93, 195, 126, 28, 32, 17, 15, 252, 196, 1, 237, 44, 57, 8, 134, 50,
@@ -25,6 +25,6 @@ export const provider = new AnchorProvider(
 );
 const idl = IDL;
 // Address of the deployed program.
-const programId = "4QWKKh3ogEeT1wpQrtTZrQ5v1wbT4Wixt2xXBmh2mW3Q";
+const programId = "BHefxRSoYeaBqhHh4SHK8R6HcSzvVNfrVjK347cdGVbB";
 // Generate the program client from IDL.
 export const program = new anchor.Program(idl, programId, provider);

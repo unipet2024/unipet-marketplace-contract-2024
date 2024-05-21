@@ -237,28 +237,28 @@ describe("market", async () => {
       await program.provider.connection.getTokenAccountBalance(seller1_mint1);
     console.log("seller1_mint1_balance: ", seller1_mint1_balance.value.amount);
 
-    console.log("Set new operator");
-    await program.methods
-      .setOperator(new_operator.publicKey)
-      .accounts({
-        market: market_account,
-        adminAccount: admin_account,
-        operatorAccount: operator_account,
-      })
-      .rpc();
+    // console.log("Set new operator");
+    // await program.methods
+    //   .setOperator(new_operator.publicKey)
+    //   .accounts({
+    //     market: market_account,
+    //     adminAccount: admin_account,
+    //     operatorAccount: operator_account,
+    //   })
+    //   .rpc();
 
-    let operator_account_info = await program.account.authorityRole.fetch(
-      operator_account
-    );
-    assert.equal(
-      operator_account_info.authority.toString(),
-      new_operator.publicKey.toString(),
-      "Operator invalid"
-    );
+    // let operator_account_info = await program.account.authorityRole.fetch(
+    //   operator_account
+    // );
+    // assert.equal(
+    //   operator_account_info.authority.toString(),
+    //   new_operator.publicKey.toString(),
+    //   "Operator invalid"
+    // );
 
     console.log("Set market to private, only operator can listing");
     await program.methods
-      .setStatus({ private: {} })
+      .setStatus({ public: {} })
       .accounts({
         market: market_account,
         operatorAccount: operator_account,

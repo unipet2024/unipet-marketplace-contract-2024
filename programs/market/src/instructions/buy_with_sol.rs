@@ -27,14 +27,14 @@ pub struct BuyWithSOL<'info> {
         associated_token::mint = nft_mint,
         associated_token::authority = buyer
     )]
-    pub nft_to: Account<'info, TokenAccount>,
+    pub nft_to: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = nft_mint,
         associated_token::authority = market,
     )]
-    pub nft_from: Account<'info, TokenAccount>,
+    pub nft_from: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -43,9 +43,9 @@ pub struct BuyWithSOL<'info> {
         // constraint = listing_account.owner == seller.key() @ MarketErrors::InputInvalid,
         // constraint = listing_account.status == ListingStatus::Listing @ MarketErrors::ItemNotFound,
     )]
-    pub listing_account: Account<'info, ListingData>,
+    pub listing_account: Box<Account<'info, ListingData>>,
 
-    pub nft_mint: Account<'info, Mint>,
+    pub nft_mint: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub buyer: Signer<'info>,
 
@@ -60,9 +60,13 @@ pub struct BuyWithSOL<'info> {
 pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
     // let mint = &mut ctx.accounts.mint;
     let market = &ctx.accounts.market;
+    msg!("Call to Market");
     let seller = &ctx.accounts.seller;
+    msg!("Call to Seller");
     let buyer = &ctx.accounts.buyer;
+    msg!("Call to Buyer");
     let listing_account = &mut ctx.accounts.listing_account;
+    msg!("Call to Listing account");
 
     validate(
         &listing_account,
@@ -70,9 +74,13 @@ pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
         buyer.to_account_info().lamports(),
     )?;
 
+    msg!("Call to Validate");
+
     //calculate commisison
     let commission_amount = market.commission * listing_account.price / 100;
     let seller_amount = listing_account.price - commission_amount;
+
+    msg!("Commisison : {:} - {:}", commission_amount, seller_amount);
 
     //transfer amount to seller
 

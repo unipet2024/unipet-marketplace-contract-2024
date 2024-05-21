@@ -20,7 +20,7 @@ pub struct Init<'info> {
         seeds = [ADMIN_ROLE], 
         bump,
     )]
-    pub admin_account:  Account<'info, AuthorityRole>,
+    pub admin_account:  Box<Account<'info, AuthorityRole>>,
     #[account(
         init_if_needed,
         space = 8+170, // max 5 operator
@@ -28,7 +28,7 @@ pub struct Init<'info> {
         seeds = [OPERATOR_ROLE], 
         bump,
     )]
-    pub operator_account:  Account<'info, AuthorityRole>,
+    pub operator_account:  Box<Account<'info, AuthorityRole>>,
 
     #[account(mut, signer)]
     pub authority: Signer<'info>,

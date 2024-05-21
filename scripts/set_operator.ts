@@ -34,25 +34,25 @@ async function init() {
 
   console.log("Operator: ", operator_account.toString());
 
-  try {
-    try {
-      await program.methods
-        .setAuthority({ operator: {} }, [
-          TUNG_operator,
-          new PublicKey("aGwtDcFXg9FMJ43axF1x1wqeVjPSLHeVGhmgEGgWn16"),
-        ])
-        .accounts({
-          market: market_account,
-          operatorAccount: operator_account,
-          adminAccount: admin_account,
-        })
-        .rpc();
-    } catch (error) {
-      console.log(error);
-    }
-  } catch (error) {
-    console.log(error);
-  }
+  // try {
+  //   try {
+  //     await program.methods
+  //       .setAuthority({ operator: {} }, [
+  //         TUNG_operator,
+  //         new PublicKey("aGwtDcFXg9FMJ43axF1x1wqeVjPSLHeVGhmgEGgWn16"),
+  //       ])
+  //       .accounts({
+  //         market: market_account,
+  //         operatorAccount: operator_account,
+  //         adminAccount: admin_account,
+  //       })
+  //       .rpc();
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // } catch (error) {
+  //   console.log(error);
+  // }
 
   let market_account_info = await program.account.market.fetch(market_account);
   console.log(market_account_info);

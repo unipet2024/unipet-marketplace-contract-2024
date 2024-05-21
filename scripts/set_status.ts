@@ -9,10 +9,6 @@ async function init() {
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
 
-  const new_operator = new PublicKey(
-    "bnSbou4HkzYGX6Aep7FLyUp872BsyZ2597QRAneJMFk"
-  );
-
   let [market_account] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("MARKET_ACCOUNT")],
     program.programId
@@ -35,14 +31,14 @@ async function init() {
   console.log("Operator: ", operator_account.toString());
 
   console.log("Set market to private, only operator can listing");
-  // await program.methods
-  //   .setStatus({ private: {} })
-  //   .accounts({
-  //     market: market_account,
-  //     operatorAccount: operator_account,
-  //     adminAccount: admin_account,
-  //   })
-  //   .rpc();
+  await program.methods
+    .setStatus({ private: {} })
+    .accounts({
+      market: market_account,
+      operatorAccount: operator_account,
+      adminAccount: admin_account,
+    })
+    .rpc();
 
   let market_account_info = await program.account.market.fetch(market_account);
   console.log(market_account_info);

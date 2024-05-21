@@ -14,7 +14,7 @@ pub use instructions::*;
 pub use state::*;
 pub use types::*;
 
-declare_id!("4QWKKh3ogEeT1wpQrtTZrQ5v1wbT4Wixt2xXBmh2mW3Q");
+declare_id!("BHefxRSoYeaBqhHh4SHK8R6HcSzvVNfrVjK347cdGVbB");
 
 #[program]
 pub mod market {

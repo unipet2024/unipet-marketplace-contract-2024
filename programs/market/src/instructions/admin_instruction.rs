@@ -20,7 +20,7 @@ pub struct AdminInstruction<'info> {
         constraint = admin_account.role == AuthRole::Admin @ MarketErrors::OnlyAdmin,
         constraint = admin_account.status == true @ MarketErrors::OnlyAdmin,
     )]
-    pub admin_account:  Account<'info, AuthorityRole>,
+    pub admin_account:  Box<Account<'info, AuthorityRole>>,
 
     #[account(
         mut,
@@ -29,7 +29,7 @@ pub struct AdminInstruction<'info> {
         constraint = operator_account.role == AuthRole::Operator @ MarketErrors::OnlyOperator,
         constraint = operator_account.status == true @ MarketErrors::OnlyOperator,
     )]
-    pub operator_account:  Account<'info, AuthorityRole>,
+    pub operator_account:  Box<Account<'info, AuthorityRole>>,
 
     #[account(mut, signer)]
     pub admin: Signer<'info>,

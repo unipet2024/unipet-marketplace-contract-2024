@@ -14,6 +14,7 @@ use crate::{
 #[derive(Accounts)]
 pub struct BuyWithSPL<'info> {
     #[account(
+        mut,
         seeds = [MARKET_ACCOUNT],
         bump=market.bump,
     )]
@@ -24,7 +25,7 @@ pub struct BuyWithSPL<'info> {
         associated_token::mint = currency_mint,
         associated_token::authority = market
     )]
-    pub currency_market: Account<'info, TokenAccount>,
+    pub currency_market: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init_if_needed,
@@ -32,27 +33,27 @@ pub struct BuyWithSPL<'info> {
         associated_token::mint = nft_mint,
         associated_token::authority = buyer
     )]
-    pub nft_to: Account<'info, TokenAccount>,
+    pub nft_to: Box<Account<'info, TokenAccount>>,
     #[account(
         init_if_needed,
         payer = buyer,
         associated_token::mint = currency_mint,
         associated_token::authority = seller
     )]
-    pub currency_to: Account<'info, TokenAccount>,
+    pub currency_to: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = nft_mint,
         associated_token::authority = market,
     )]
-    pub nft_from: Account<'info, TokenAccount>,
+    pub nft_from: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = currency_mint,
         associated_token::authority = buyer
     )]
-    pub currency_from: Account<'info, TokenAccount>,
+    pub currency_from: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -61,10 +62,10 @@ pub struct BuyWithSPL<'info> {
         // constraint = listing_account.owner == seller.key() @ MarketErrors::InputInvalid,
         // constraint = listing_account.status == ListingStatus::Listing @ MarketErrors::ItemNotFound,
     )]
-    pub listing_account: Account<'info, ListingData>,
+    pub listing_account: Box<Account<'info, ListingData>>,
 
-    pub nft_mint: Account<'info, Mint>,
-    pub currency_mint: Account<'info, Mint>,
+    pub nft_mint: Box<Account<'info, Mint>>,
+    pub currency_mint: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub buyer: Signer<'info>,
 
