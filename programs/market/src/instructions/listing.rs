@@ -120,13 +120,13 @@ pub fn listing_handler(ctx: Context<Listing>, currency: Pubkey, price: u64) -> R
 
     //emit event
     emit!(ListingEvent {
-        owner: authority.key(),
+        user: authority.key(),
         mint: ctx.accounts.mint.key(),
-        token_account: ctx.accounts.from.key(),
         currency: currency,
         price: price,
-        listingtime: current,
-        opentime: current + market.duration
+        listing_time: current,
+        open_time: current + market.duration,
+        slot: Clock::get()?.slot,
     });
 
     Ok(())

@@ -5,13 +5,21 @@ use crate::AuthRole;
 
 #[event]
 pub struct ListingEvent {
-    pub owner: Pubkey,
+    pub user: Pubkey,
     pub mint: Pubkey,
-    pub token_account: Pubkey,
     pub currency: Pubkey,
     pub price: u64,
-    pub listingtime: i64,
-    pub opentime: i64,
+    pub listing_time: i64,
+    pub open_time: i64,
+    pub slot: u64,
+}
+
+#[event]
+pub struct UnListingEvent {
+    pub user: Pubkey,
+    pub mint: Pubkey,
+    pub time: i64,
+    pub slot: u64,
 }
 #[event]
 pub struct BuyEvent {

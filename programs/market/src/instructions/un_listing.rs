@@ -1,3 +1,4 @@
+use crate::UnListingEvent;
 use crate::{ListingData, ListingStatus, Market, MarketErrors, LISTING_ACCOUNT, MARKET_ACCOUNT};
 use anchor_lang::prelude::*;
 use anchor_spl::token::transfer;
@@ -77,9 +78,16 @@ pub fn un_listing_handler(ctx: Context<UnListing>) -> Result<()> {
         1,
     )?;
 
-    //update listing account
-    // listing_account.status = ListingStatus::Close;
     listing_account.un_listing()?;
+
+    //emit event UnListing
+    let clock = Clock::get().unwrap();
+    emit!(UnListingEvent {
+        user: ctx.accounts.authority.key(),
+        mint: ctx.accounts.mint.key(),
+        time: clock.unix_timestamp,
+        slot: clock.slot,
+    });
 
     Ok(())
 }
