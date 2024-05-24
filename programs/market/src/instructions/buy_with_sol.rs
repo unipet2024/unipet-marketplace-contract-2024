@@ -135,6 +135,7 @@ pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
     //update listing account
     listing_account.status = ListingStatus::Close;
 
+    let clock = Clock::get()?;
     emit!(BuyEvent {
         buyer: buyer.key(),
         seller: listing_account.owner,
@@ -142,7 +143,8 @@ pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
         currency: ctx.accounts.market.key(),
         price: listing_account.price,
         commission: commission_amount,
-        time: Clock::get()?.unix_timestamp
+        time: clock.unix_timestamp,
+        slot: clock.slot,
     });
 
     Ok(())

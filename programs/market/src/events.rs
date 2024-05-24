@@ -30,6 +30,7 @@ pub struct BuyEvent {
     pub price: u64,
     pub commission: u64,
     pub time: i64,
+    pub slot: u64,
 }
 
 #[event]
