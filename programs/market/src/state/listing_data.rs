@@ -34,11 +34,11 @@ impl ListingData {
         Ok(())
     }
 
-    pub fn un_listing(&mut self) -> Result<()> {
-        self.status = ListingStatus::Close;
-        self.price = 0;
-        self.listingtime = 0;
-        self.opentime = 0;
-        Ok(())
-    }
+    // pub fn un_listing(&mut self) -> Result<()> {
+    //     self.status = ListingStatus::Close;
+    //     self.price = 0;
+    //     self.listingtime = 0;
+    //     self.opentime = 0;
+    //     Ok(())
+    // }
 }

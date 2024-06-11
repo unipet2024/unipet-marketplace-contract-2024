@@ -56,6 +56,14 @@ pub mod market {
         listing::listing_handler(ctx, currency, price)
     }
 
+    pub fn listing_by_operator(
+        ctx: Context<ListingByOperator>,
+        currency: Pubkey,
+        price: u64,
+    ) -> Result<()> {
+        listing_by_operator::listing_by_operator_handler(ctx, currency, price)
+    }
+
     pub fn buy_with_spl(ctx: Context<BuyWithSPL>) -> Result<()> {
         buy_with_spl::buy_with_spl_hanlder(ctx)
     }

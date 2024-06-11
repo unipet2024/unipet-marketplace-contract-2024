@@ -33,6 +33,7 @@ pub struct UnListing<'info> {
 
     #[account(
         mut,
+        close = authority,
         seeds = [LISTING_ACCOUNT, mint.key().as_ref()],
         bump=listing_account.bump,
         constraint = listing_account.owner == authority.key() @ MarketErrors::OnlyOwner,
@@ -78,7 +79,7 @@ pub fn un_listing_handler(ctx: Context<UnListing>) -> Result<()> {
         1,
     )?;
 
-    listing_account.un_listing()?;
+    // listing_account.un_listing()?;
 
     //emit event UnListing
     let clock = Clock::get().unwrap();

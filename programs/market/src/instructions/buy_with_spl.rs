@@ -59,6 +59,7 @@ pub struct BuyWithSPL<'info> {
         mut,
         seeds = [LISTING_ACCOUNT, nft_mint.key().as_ref()],
         bump=listing_account.bump,
+        close= seller,
         // constraint = listing_account.owner == seller.key() @ MarketErrors::InputInvalid,
         // constraint = listing_account.status == ListingStatus::Listing @ MarketErrors::ItemNotFound,
     )]
@@ -146,7 +147,6 @@ pub fn buy_with_spl_hanlder(ctx: Context<BuyWithSPL>) -> Result<()> {
 
     //update listing account
     listing_account.status = ListingStatus::Close;
-
 
     let clock = Clock::get()?;
     emit!(BuyEvent {

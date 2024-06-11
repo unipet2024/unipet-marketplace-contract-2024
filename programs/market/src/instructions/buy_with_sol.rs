@@ -40,6 +40,7 @@ pub struct BuyWithSOL<'info> {
         mut,
         seeds = [LISTING_ACCOUNT, nft_mint.key().as_ref()],
         bump=listing_account.bump,
+        close = seller,
         // constraint = listing_account.owner == seller.key() @ MarketErrors::InputInvalid,
         // constraint = listing_account.status == ListingStatus::Listing @ MarketErrors::ItemNotFound,
     )]
@@ -75,6 +76,8 @@ pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
     )?;
 
     msg!("Call to Validate");
+
+    // listing_account.close(sol_destination);
 
     //calculate commisison
     let commission_amount = market.commission * listing_account.price / 100;
@@ -133,7 +136,10 @@ pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
     )?;
 
     //update listing account
-    listing_account.status = ListingStatus::Close;
+    // listing_account.status = ListingStatus::Close;
+
+    //close listing acocunt
+    // listing_account.close(seller.to_account_info());
 
     let clock = Clock::get()?;
     emit!(BuyEvent {

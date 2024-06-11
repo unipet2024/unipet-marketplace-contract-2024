@@ -16,18 +16,18 @@ async function init() {
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
 
-  const MINT = new PublicKey("5Et3fqFdXqKRKnTvNq8YBrdYWfQdSALJFYiCsjKdHAL7");
+  // const MINT = new PublicKey("5Et3fqFdXqKRKnTvNq8YBrdYWfQdSALJFYiCsjKdHAL7");
   const operator = new PublicKey("aGwtDcFXg9FMJ43axF1x1wqeVjPSLHeVGhmgEGgWn16");
   const USDC = new PublicKey("BUJST4dk6fnM5G3FnhTVc3pjxRJE7w2C5YL9XgLbdsXW");
 
-  const mint_from = await getAssociatedTokenAddress(MINT, operator);
+  const mint_from = await getAssociatedTokenAddress(USDC, operator);
 
   let [listing_mint] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("LISTING_ACCOUNT"), MINT.toBuffer()],
+    [Buffer.from("LISTING_ACCOUNT"), USDC.toBuffer()],
     program.programId
   );
 
-  console.log('Listing mint: ', listing_mint.toString())
+  console.log("Listing mint: ", listing_mint.toString());
 
   let [market_account] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("MARKET_ACCOUNT")],
@@ -37,7 +37,7 @@ async function init() {
   let market_mint = await getOrCreateAssociatedTokenAccount(
     connection,
     payer,
-    MINT,
+    USDC,
     market_account,
     true
   );
@@ -63,17 +63,19 @@ async function init() {
   const address_0 = new PublicKey("11111111111111111111111111111111");
 
   try {
-    await program.methods
-      .listing(USDC, new anchor.BN(100))
+    const transaction = await program.methods
+      .listing(address_0, new anchor.BN(100))
       .accounts({
         market: market_account,
         operatorAccount: operator_account,
         listingAccount: listing_mint,
         from: mint_from,
         to: market_mint.address,
-        mint: MINT,
+        mint: USDC,
       })
       .rpc();
+
+    console.log(transaction);
   } catch (error) {
     console.log(error);
   }
