@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::AuthRole;
+use crate::{AuthRole, ListingDataParam};
 // use solana_program::pubkey;
 
 #[event]
@@ -11,6 +11,13 @@ pub struct ListingEvent {
     pub price: u64,
     pub listing_time: i64,
     pub open_time: i64,
+    pub slot: u64,
+}
+
+#[event]
+pub struct ListingEventOperator {
+    pub operator: Pubkey,
+    pub listing_datas: Vec<ListingDataParam>,
     pub slot: u64,
 }
 

@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
+// use anchor_spl::{associated_token::get_associated_token_address, token::Mint};
+// use solana_client::rpc_client::RpcClient;
 
 use crate::{
-    AuthRole, AuthorityRole, ListingData, ListingEvent, Market, MarketErrors, LISTING_ACCOUNT,
-    MARKET_ACCOUNT, OPERATOR_ROLE,
+    AuthRole, AuthorityRole, ListingDataOperator, ListingDataParam, ListingEventOperator, Market,
+    MarketErrors, LISTING_ACCOUNT_OPERATOR, MARKET_ACCOUNT, OPERATOR_ROLE,
 };
 
 #[derive(Accounts)]
@@ -22,18 +23,19 @@ pub struct ListingByOperator<'info> {
         constraint = operator_account.is_authority(authority.key) == true @ MarketErrors::OnlyOperator,
         constraint = operator_account.status == true @ MarketErrors::OnlyOperator,
     )]
-    pub operator_account:  Box<Account<'info, AuthorityRole>>,
+    pub operator_account: Box<Account<'info, AuthorityRole>>,
 
     #[account(
         init,
         space = 8 + 90,
         payer = authority,
-        seeds = [LISTING_ACCOUNT, mint.key().as_ref()],
+        // seeds = [LISTING_ACCOUNT, mint.key().as_ref()],
+        seeds = [LISTING_ACCOUNT_OPERATOR],
         bump
     )]
-    pub listing_account: Box<Account<'info, ListingData>>,
+    pub listing_account_operator: Box<Account<'info, ListingDataOperator>>,
 
-    pub mint: Box<Account<'info, Mint>>,
+    // pub mint: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub authority: Signer<'info>,
     // pub associated_token_program: Program<'info, AssociatedToken>,
@@ -43,45 +45,50 @@ pub struct ListingByOperator<'info> {
 
 pub fn listing_by_operator_handler(
     ctx: Context<ListingByOperator>,
-    currency: Pubkey,
-    price: u64,
+    listing_datas: Vec<ListingDataParam>,
 ) -> Result<()> {
-    let market = &mut ctx.accounts.market;
-    let listing_account = &mut ctx.accounts.listing_account;
+    validate(&ctx, &listing_datas)?;
+
+    // let market = &mut ctx.accounts.market;
+    let listing_account_operator = &mut ctx.accounts.listing_account_operator;
     // let operator_account = &mut ctx.accounts.operator_account;
-    // let token_program = &ctx.accounts.token_program;
-    let authority = &ctx.accounts.authority;
-
-    msg!("Currency: {:}", currency);
-
-    //check currency supported
-    require!(
-        market.check_currency_support(&currency) == true,
-        MarketErrors::CurrencyNotSupport
-    );
+    // // let token_program = &ctx.accounts.token_program;
+    // let authority = &ctx.accounts.authority;
 
     //Update listing_account
-    let current = Clock::get()?.unix_timestamp;
+    // let current = Clock::get()?.unix_timestamp;
 
-    listing_account.listing(
-        &authority.key(),
-        &currency,
-        price,
-        current,
-        current + market.duration,
-        ctx.bumps.listing_account,
-    )?;
+    listing_account_operator.listing(&listing_datas, ctx.bumps.listing_account_operator)?;
 
-    //emit event
-    emit!(ListingEvent {
-        user: authority.key(),
-        mint: ctx.accounts.mint.key(),
-        currency: currency,
-        price: price,
-        listing_time: current,
-        open_time: current + market.duration,
-        slot: Clock::get()?.slot,
+    emit!(ListingEventOperator {
+        operator: ctx.accounts.operator_account.key(),
+        listing_datas,
+        slot: Clock::get()?.slot
     });
+    
+    Ok(())
+}
 
+fn validate(ctx: &Context<ListingByOperator>, listing_datas: &Vec<ListingDataParam>) -> Result<()> {
+    for listing_data in listing_datas.iter() {
+        //validate currency
+        require_eq!(
+            ctx.accounts
+                .market
+                .check_currency_support(&listing_data.currency),
+            true,
+            MarketErrors::CurrencyNotSupport
+        );
+        //validate balance
+        // let ata = get_associated_token_address(
+        //     ctx.accounts.market.to_account_info().key,
+        //     &listing_data.mint,
+        // );
+
+        // let connection = RpcClient::new("https://intensive-dimensional-shape.solana-devnet.quiknode.pro/9f13ebb0af09474b28825684a57cdd891b7734d9/".to_string());
+
+        // let account_data = connection.get_token_account_balance(&ata).unwrap();
+        // msg!("Token amount: {:}", account_data.ui_amount_string);
+    }
     Ok(())
 }
