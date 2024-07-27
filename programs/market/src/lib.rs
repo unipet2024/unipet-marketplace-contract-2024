@@ -52,8 +52,8 @@ pub mod market {
         admin_instruction::set_status_handler(ctx, status)
     }
 
-    pub fn listing(ctx: Context<Listing>, currency: Pubkey, price: u64) -> Result<()> {
-        listing::listing_handler(ctx, currency, price)
+    pub fn listing(ctx: Context<Listing>, listing_params: Vec<ListingParam>) -> Result<()> {
+        Listing::listing_handler(ctx, listing_params)
     }
 
     pub fn listing_by_operator(

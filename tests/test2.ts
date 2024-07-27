@@ -9,6 +9,7 @@ import {
   LAMPORTS_PER_SOL,
   sendAndConfirmRawTransaction,
   Transaction,
+  PublicKey,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
 
@@ -42,6 +43,7 @@ describe("market", async () => {
   let buyer1, buyer2, buyer3;
   let buyer1Key, buyer2Key, buyer3Key;
   let market_account, admin_account, operator_account;
+  let address_zero = new PublicKey("11111111111111111111111111111111");
 
   beforeEach(async () => {
     // console.log("Initialising...");
@@ -313,17 +315,29 @@ describe("market", async () => {
 
     console.log("**********************************");
     console.log("Operator listing NFT 1");
+    let listing_params = [{ currency: currency1, price: new anchor.BN(100) }];
     try {
       await program.methods
-        .listing(currency1, new anchor.BN(100))
+        .listing(listing_params)
         .accounts({
           market: market_account,
-          operatorAccount: operator_account,
-          from: operator_mint1,
-          to: market_mint1.address,
-          mint: mint1,
+          from0: operator_mint1,
+          from1: address_zero,
+          from2: address_zero,
+          from3: address_zero,
+          from4: address_zero,
+          to0: market_mint1.address,
+          to1: address_zero,
+          to2: address_zero,
+          to3: address_zero,
+          to4: address_zero,
+          mint0: mint1,
+          mint1: address_zero,
+          mint2: address_zero,
+          mint3: address_zero,
+          mint4: address_zero,
+          listingAccount0: listing_mint1,
           authority: new_operator.publicKey,
-          listingAccount: listing_mint1,
         })
         .signers([new_operator])
         .rpc();

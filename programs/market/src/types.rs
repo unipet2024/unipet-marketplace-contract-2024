@@ -24,3 +24,10 @@ pub enum MarketStatus {
     Public,
     Close,
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
+pub struct ListingParam {
+    // pub mint: Pubkey,
+    pub currency: Pubkey,
+    pub price: u64,
+}

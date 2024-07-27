@@ -42,6 +42,12 @@ pub enum MarketErrors {
 
     #[msg("Only owner")]
     OnlyOwner,
+
+    #[msg("Account is not owned by Market program")]
+    IllegalAccountOwner,
+
+    #[msg("Invalid account provided")]
+    InvalidAccount,
 }
 
 impl From<MarketErrors> for ProgramError {
