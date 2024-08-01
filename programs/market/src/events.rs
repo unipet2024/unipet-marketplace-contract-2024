@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::AuthRole;
+use crate::{AuthRole, MintListingParam};
 // use solana_program::pubkey;
 
 #[event]
@@ -21,6 +21,15 @@ pub struct UnListingEvent {
     pub time: i64,
     pub slot: u64,
 }
+
+#[event]
+pub struct ChangePriceEvent {
+    pub user: Pubkey,
+    pub items: Vec<MintListingParam>,
+    pub time: i64,
+    pub slot: u64,
+}
+
 #[event]
 pub struct BuyEvent {
     pub seller: Pubkey,

@@ -1,47 +1,108 @@
-use crate::UnListingEvent;
-use crate::{ListingData, ListingStatus, Market, MarketErrors, LISTING_ACCOUNT, MARKET_ACCOUNT};
 use anchor_lang::prelude::*;
-use anchor_spl::token::transfer;
-use anchor_spl::token::Transfer;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{Mint, Token, TokenAccount},
 };
 
+use anchor_spl::token::{transfer, Transfer};
+
+use crate::constants::*;
+use crate::error::*;
+use crate::events::*;
+use crate::state::*;
+// use crate::types::*;
+
 #[derive(Accounts)]
 pub struct UnListing<'info> {
     #[account(
-        mut,
         seeds = [MARKET_ACCOUNT],
-        bump=market.bump
+        bump = market.bump,
+        constraint = market.market_storage == market_storage.key() @ MarketErrors::MarketStorageInvalid,
     )]
     pub market: Box<Account<'info, Market>>,
+    
+    #[account(
+        mut,
+        seeds = [MARKET_STORAGE_ACCOUNT],
+        bump = market_storage.bump
+    )]
+    pub market_storage: Box<Account<'info, MarketStorage>>,
 
     #[account(
         mut,
-        associated_token::mint = mint,
-        associated_token::authority = market
+        associated_token::mint = mint_0,
+        associated_token::authority = authority
     )]
-    pub from: Box<Account<'info, TokenAccount>>,
+    pub from_0: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
-        associated_token::mint = mint,
-        associated_token::authority = authority,
+        associated_token::mint = mint_1,
+        associated_token::authority = authority
     )]
-    pub to: Box<Account<'info, TokenAccount>>,
+    pub from_1: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
-        close = authority,
-        seeds = [LISTING_ACCOUNT, mint.key().as_ref()],
-        bump=listing_account.bump,
-        constraint = listing_account.owner == authority.key() @ MarketErrors::OnlyOwner,
-        constraint = listing_account.status == ListingStatus::Listing @ MarketErrors::ItemNotFound,
+        associated_token::mint = mint_2,
+        associated_token::authority = authority
     )]
-    pub listing_account: Box<Account<'info, ListingData>>,
+    pub from_2: Box<Account<'info, TokenAccount>>,
 
-    pub mint: Box<Account<'info, Mint>>,
+    #[account(
+        mut,
+        associated_token::mint = mint_3,
+        associated_token::authority = authority
+    )]
+    pub from_3: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint_4,
+        associated_token::authority = authority
+    )]
+    pub from_4: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint_0,
+        associated_token::authority = market,
+    )]
+    pub to_0: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint_1,
+        associated_token::authority = market,
+    )]
+    pub to_1: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint_2,
+        associated_token::authority = market,
+    )]
+    pub to_2: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint_3,
+        associated_token::authority = market,
+    )]
+    pub to_3: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint_4,
+        associated_token::authority = market,
+    )]
+    pub to_4: Box<Account<'info, TokenAccount>>,
+
+    pub mint_0: Box<Account<'info, Mint>>,
+    pub mint_1: Box<Account<'info, Mint>>,
+    pub mint_2: Box<Account<'info, Mint>>,
+    pub mint_3: Box<Account<'info, Mint>>,
+    pub mint_4: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub authority: Signer<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -49,46 +110,84 @@ pub struct UnListing<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn un_listing_handler(ctx: Context<UnListing>) -> Result<()> {
-    let market = &mut ctx.accounts.market;
-    let listing_account = &mut ctx.accounts.listing_account;
-    // let operator_account = &mut ctx.accounts.operator_account;
-    let token_program = &ctx.accounts.token_program;
-    // let authority = &ctx.accounts.authority;
+impl UnListing<'_> {
+    pub fn unlisting_handler(ctx: Context<Self>) -> Result<()> {
+        let market = &mut ctx.accounts.market;
+        let market_storage = &mut ctx.accounts.market_storage;
+        let token_program = &ctx.accounts.token_program;
+        let authority = &ctx.accounts.authority;
 
-    //check nft listed
-    require!(
-        listing_account.status == ListingStatus::Listing,
-        MarketErrors::ItemNotFound
-    );
+        let froms = vec![
+            &ctx.accounts.from_0,
+            &ctx.accounts.from_1,
+            &ctx.accounts.from_2,
+            &ctx.accounts.from_3,
+            &ctx.accounts.from_4,
+        ];
 
-    //transfer NFT back to seller
+        let tos = vec![
+            &ctx.accounts.to_0,
+            &ctx.accounts.to_1,
+            &ctx.accounts.to_2,
+            &ctx.accounts.to_3,
+            &ctx.accounts.to_4,
+        ];
 
-    let seeds: &[&[u8]] = &[MARKET_ACCOUNT, &[market.bump]];
-    let signer = &[&seeds[..]];
-    transfer(
-        CpiContext::new(
-            token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.from.to_account_info(),
-                to: ctx.accounts.to.to_account_info(),
-                authority: market.to_account_info(),
-            },
-        )
-        .with_signer(signer),
-        1,
-    )?;
+        let mints = vec![
+            &ctx.accounts.mint_0,
+            &ctx.accounts.mint_1,
+            &ctx.accounts.mint_2,
+            &ctx.accounts.mint_3,
+            &ctx.accounts.mint_4,
+        ];
 
-    // listing_account.un_listing()?;
+        let clock = Clock::get()?;
 
-    //emit event UnListing
-    let clock = Clock::get().unwrap();
-    emit!(UnListingEvent {
-        user: ctx.accounts.authority.key(),
-        mint: ctx.accounts.mint.key(),
-        time: clock.unix_timestamp,
-        slot: clock.slot,
-    });
+        for (index, param) in mints.iter().enumerate() {
+            if mints[index].key() != Pubkey::default() {
+                // check mint
+                // let item_index = match market_storage.get_item_index(mints[index].key()) {
+                //     Some(item_index) => item_index,
+                //     None => return err!(MarketErrors::ItemNotFound),
+                // };
 
-    Ok(())
+                //check owner
+                let listing_item = match market_storage.get_item(mints[index].key()) {
+                    Ok(listing_item) => listing_item,
+                    Err(err) => return err!(MarketErrors::ItemNotFound),
+                };
+                require_keys_eq!(listing_item.owner, authority.key(), MarketErrors::OnlyOwner);
+
+                // let listing_item = market_storage
+
+                // Transfer NFt from market to user
+                let seeds: &[&[u8]] = &[MARKET_ACCOUNT, &[market.bump]];
+                let signer = &[&seeds[..]];
+                transfer(
+                    CpiContext::new(
+                        token_program.to_account_info(),
+                        Transfer {
+                            from: froms[index].to_account_info(),
+                            to: tos[index].to_account_info(),
+                            authority: market.to_account_info(),
+                        },
+                    )
+                    .with_signer(signer),
+                    1,
+                )?;
+
+                //emit event UnListing
+                emit!(UnListingEvent {
+                    user: ctx.accounts.authority.key(),
+                    mint: mints[index].key(),
+                    time: clock.unix_timestamp,
+                    slot: clock.slot,
+                });
+
+                market_storage.remove_item(mints[index].key())?;
+            }
+        }
+
+        Ok(())
+    }
 }

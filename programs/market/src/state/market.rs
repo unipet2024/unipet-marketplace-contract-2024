@@ -5,8 +5,9 @@ use crate::MarketStatus;
 // total 230
 #[account]
 pub struct Market {
-    pub admin: Pubkey,    //32
-    pub operator: Pubkey, //32
+    pub admin: Pubkey,          //32
+    pub operator: Pubkey,       //32
+    pub market_storage: Pubkey, //32
     // pub vault: Pubkey,           //32
     pub duration: i64,           //8
     pub currencies: Vec<Pubkey>, // Max 5 => 4+ 32*5=164
@@ -21,6 +22,7 @@ impl Market {
         &mut self,
         admin: Pubkey,
         operator: Pubkey,
+        market_storage: Pubkey,
         bump: u8,
         duration: i64,
         currencies: &Vec<Pubkey>,
@@ -28,6 +30,7 @@ impl Market {
     ) -> Result<()> {
         self.admin = admin;
         self.operator = operator;
+        self.market_storage = market_storage;
         self.duration = duration;
         self.commission = commission;
         // self.vault = vault;

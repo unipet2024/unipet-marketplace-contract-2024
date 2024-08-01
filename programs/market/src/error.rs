@@ -5,6 +5,9 @@ pub enum MarketErrors {
     #[msg("Item not found")]
     ItemNotFound,
 
+    #[msg("Item already exist")]
+    ItemAlreadyExist,
+
     #[msg("Item still lock")]
     ItemStillLock,
 
@@ -25,6 +28,9 @@ pub enum MarketErrors {
     #[msg("Operator account invalid")]
     OperatorAccountInvalid,
 
+    #[msg("Marker storage account invalid")]
+    MarketStorageInvalid,
+
     #[msg("Only admin")]
     OnlyAdmin,
 
@@ -37,11 +43,20 @@ pub enum MarketErrors {
     #[msg("Input invalid")]
     InputInvalid,
 
+    #[msg("Owner invalid")]
+    OwnerInvalid,
+
     #[msg("Insufficient amount")]
     InsufficientAmount,
 
     #[msg("Only owner")]
     OnlyOwner,
+
+    #[msg("Account is not owned by Market program")]
+    IllegalAccountOwner,
+
+    #[msg("Invalid account provided")]
+    InvalidAccount,
 }
 
 impl From<MarketErrors> for ProgramError {

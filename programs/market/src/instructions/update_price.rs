@@ -1,65 +1,78 @@
 use anchor_lang::prelude::*;
 
-use crate::{ListingData, ListingStatus, Market, MarketErrors, LISTING_ACCOUNT, MARKET_ACCOUNT};
-
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token},
-};
+use crate::constants::*;
+use crate::error::*;
+use crate::events::*;
+use crate::state::*;
+use crate::types::*;
 
 #[derive(Accounts)]
 pub struct UpdatePrice<'info> {
     #[account(
         seeds = [MARKET_ACCOUNT],
-        bump=market.bump,
+        bump = market.bump,
+        constraint = market.market_storage == market_storage.key() @ MarketErrors::MarketStorageInvalid,
     )]
     pub market: Box<Account<'info, Market>>,
 
     #[account(
         mut,
-        seeds = [LISTING_ACCOUNT, mint.key().as_ref()],
-        bump=listing_account.bump,
-        constraint = listing_account.owner == authority.key() @ MarketErrors::OnlyOwner,
+        seeds = [MARKET_STORAGE_ACCOUNT],
+        bump = market_storage.bump
     )]
-    pub listing_account: Box<Account<'info, ListingData>>,
+    pub market_storage: Box<Account<'info, MarketStorage>>,
 
-    pub mint: Box<Account<'info, Mint>>,
     #[account(mut, signer)]
     pub authority: Signer<'info>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn update_price_handler(ctx: Context<UpdatePrice>, currency: Pubkey, price: u64) -> Result<()> {
-    let market = &mut ctx.accounts.market;
-    let listing_account = &mut ctx.accounts.listing_account;
-    // let operator_account = &mut ctx.accounts.operator_account;
-    // let token_program = &ctx.accounts.token_program;
-    let authority = &ctx.accounts.authority;
+impl UpdatePrice<'_> {
+    pub fn update_price_handler(
+        ctx: Context<Self>,
+        listing_params: Vec<MintListingParam>,
+    ) -> Result<()> {
+        let market = &mut ctx.accounts.market;
+        let market_storage = &mut ctx.accounts.market_storage;
 
-    //check authority is seller
-    require_eq!(
-        listing_account.owner,
-        authority.key(),
-        MarketErrors::InputInvalid
-    );
+        let authority = &ctx.accounts.authority;
 
-    //check nft listed
-    require!(
-        listing_account.status == ListingStatus::Listing,
-        MarketErrors::ItemNotFound
-    );
+        for listing_param in listing_params.iter() {
+            require_keys_neq!(
+                listing_param.mint,
+                Pubkey::default(),
+                MarketErrors::InputInvalid
+            );
 
-    //check currency supported
-    require!(
-        market.check_currency_support(&currency) == true,
-        MarketErrors::CurrencyNotSupport
-    );
+            let mut listing_item = market_storage.get_item(listing_param.mint)?;
 
-    //update listing account
-    listing_account.currency = currency;
-    listing_account.price = price;
+            require_keys_eq!(
+                listing_item.owner,
+                authority.key(),
+                MarketErrors::OwnerInvalid
+            );
 
-    Ok(())
+            //check currency supported
+            require!(
+                market.check_currency_support(&listing_item.currency) == true,
+                MarketErrors::CurrencyNotSupport
+            );
+
+            listing_item.currency = listing_param.currency;
+            listing_item.price = listing_param.price;
+
+            market_storage.update_item(listing_item)?;
+        }
+
+        let clock = Clock::get()?;
+
+        emit!(ChangePriceEvent {
+            user: authority.key(),
+            items: listing_params,
+            time: clock.unix_timestamp,
+            slot: clock.slot
+        });
+
+        Ok(())
+    }
 }

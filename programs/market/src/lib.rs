@@ -52,16 +52,15 @@ pub mod market {
         admin_instruction::set_status_handler(ctx, status)
     }
 
-    pub fn listing(ctx: Context<Listing>, currency: Pubkey, price: u64) -> Result<()> {
-        listing::listing_handler(ctx, currency, price)
+    pub fn listing(ctx: Context<Listing>, listing_params: Vec<ListingParam>) -> Result<()> {
+        Listing::listing_handler(ctx, listing_params)
     }
 
     pub fn listing_by_operator(
         ctx: Context<ListingByOperator>,
-        currency: Pubkey,
-        price: u64,
+        listing_params: Vec<MintListingParam>,
     ) -> Result<()> {
-        listing_by_operator::listing_by_operator_handler(ctx, currency, price)
+        ListingByOperator::listing_by_operator_handler(ctx, listing_params)
     }
 
     pub fn buy_with_spl(ctx: Context<BuyWithSPL>) -> Result<()> {
@@ -72,12 +71,12 @@ pub mod market {
         buy_with_sol::buy_with_sol_hanlder(ctx)
     }
 
-    pub fn update_price(ctx: Context<UpdatePrice>, currency: Pubkey, price: u64) -> Result<()> {
-        update_price::update_price_handler(ctx, currency, price)
+    pub fn update_price(ctx: Context<UpdatePrice>, listing_params: Vec<MintListingParam>,) -> Result<()> {
+        UpdatePrice::update_price_handler(ctx, listing_params)
     }
 
     pub fn un_listing(ctx: Context<UnListing>) -> Result<()> {
-        un_listing::un_listing_handler(ctx)
+        UnListing::unlisting_handler(ctx)
     }
 
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
