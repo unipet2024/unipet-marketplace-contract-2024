@@ -143,7 +143,7 @@ impl UnListing<'_> {
 
         let clock = Clock::get()?;
 
-        for (index, param) in mints.iter().enumerate() {
+        for (index, _) in mints.iter().enumerate() {
             if mints[index].key() != Pubkey::default() {
                 // check mint
                 // let item_index = match market_storage.get_item_index(mints[index].key()) {
@@ -154,7 +154,7 @@ impl UnListing<'_> {
                 //check owner
                 let listing_item = match market_storage.get_item(mints[index].key()) {
                     Ok(listing_item) => listing_item,
-                    Err(err) => return err!(MarketErrors::ItemNotFound),
+                    Err(_) => return err!(MarketErrors::ItemNotFound),
                 };
                 require_keys_eq!(listing_item.owner, authority.key(), MarketErrors::OnlyOwner);
 

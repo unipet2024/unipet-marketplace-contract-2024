@@ -90,7 +90,7 @@ pub fn buy_with_spl_hanlder(ctx: Context<BuyWithSPL>) -> Result<()> {
 
     let listing_item = match market_storage.get_item(ctx.accounts.mint.key()) {
         Ok(listing_item) => listing_item,
-        Err(err) => return err!(MarketErrors::ItemNotFound),
+        Err(_) => return err!(MarketErrors::ItemNotFound),
     };
 
     validate(
@@ -152,7 +152,7 @@ pub fn buy_with_spl_hanlder(ctx: Context<BuyWithSPL>) -> Result<()> {
     )?;
 
     // Remove item
-    market_storage.remove_item(ctx.accounts.mint.key());
+    market_storage.remove_item(ctx.accounts.mint.key())?;
 
     let clock = Clock::get()?;
     emit!(BuyEvent {
@@ -184,6 +184,8 @@ fn validate(
 
     // SET currency = market.address in case SOL
     require_eq!(listing_item.currency, *currency, MarketErrors::InputInvalid);
+
+    require_gte!(amount, listing_item.price, MarketErrors::InsufficientAmount);
 
     let current = Clock::get()?.unix_timestamp;
     msg!("Current:{:}", current);

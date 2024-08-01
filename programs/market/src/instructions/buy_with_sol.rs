@@ -70,7 +70,7 @@ pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
 
     let listing_item = match market_storage.get_item(ctx.accounts.mint.key()) {
         Ok(listing_item) => listing_item,
-        Err(err) => return err!(MarketErrors::ItemNotFound),
+        Err(_) => return err!(MarketErrors::ItemNotFound),
     };
 
     validate(
@@ -141,7 +141,7 @@ pub fn buy_with_sol_hanlder(ctx: Context<BuyWithSOL>) -> Result<()> {
     )?;
 
     // Remove item
-    market_storage.remove_item(ctx.accounts.mint.key());
+    market_storage.remove_item(ctx.accounts.mint.key())?;
 
 
     let clock = Clock::get()?;

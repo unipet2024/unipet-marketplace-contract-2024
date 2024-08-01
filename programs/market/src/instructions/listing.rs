@@ -180,7 +180,7 @@ impl Listing<'_> {
             if mints[index].key() != Pubkey::default() {
                 // check mint
                 match market_storage.get_item_index(mints[index].key()) {
-                    Some(item_index) => return err!(MarketErrors::ItemAlreadyExist),
+                    Some(_) => return err!(MarketErrors::ItemAlreadyExist),
                     _ => 0,
                 };
 
